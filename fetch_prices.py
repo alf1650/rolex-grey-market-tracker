@@ -53,6 +53,34 @@ LISTING_RE = re.compile(
 )
 
 
+# Keywords that must appear in a title for it to belong to each family.
+# First matching family wins when re-classifying a mislabelled listing.
+FAMILY_KEYWORDS: list[tuple[str, list[str]]] = [
+    ("Submariner",       ["submariner"]),
+    ("GMT-Master II",    ["gmt-master", "gmt master", "gmtmaster", " gmt "]),
+    ("Daytona",          ["daytona"]),
+    ("Datejust",         ["datejust", "date just"]),
+    ("Sea-Dweller",      ["sea-dweller", "sea dweller", "seadweller", "deepsea"]),
+    ("Yacht-Master",     ["yacht-master", "yacht master", "yachtmaster"]),
+    ("Sky-Dweller",      ["sky-dweller", "sky dweller", "skydweller"]),
+    ("Day-Date",         ["day-date", "day date", "daydate", "president"]),
+    ("Explorer",         ["explorer"]),
+    ("Oyster Perpetual", ["oyster perpetual"]),
+    ("Air-King",         ["air-king", "air king", "airking"]),
+    ("Milgauss",         ["milgauss"]),
+]
+_FAMILY_SET = {fam for fam, _ in FAMILY_KEYWORDS}
+
+
+def detect_family(title: str) -> str | None:
+    """Return the best-matching family for a title, or None if unrecognised."""
+    t = title.lower()
+    for fam, kws in FAMILY_KEYWORDS:
+        if any(kw in t for kw in kws):
+            return fam
+    return None
+
+
 def fetch_html(url: str) -> str:
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=20) as resp:
@@ -180,6 +208,13 @@ def scrape_family(family: str, query: str) -> list[dict]:
         seen.add(key)
 
         ref = extract_ref(title)
+
+        # Validate/reclassify: if the title clearly belongs to a different
+        # known family, skip it (cross-contamination from broad search results).
+        detected = detect_family(title)
+        if detected is not None and detected != family:
+            continue
+
         listings.append({
             "title": title,
             "price": price,
