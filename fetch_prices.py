@@ -114,6 +114,11 @@ _REF_MATERIAL: dict[str, str] = {
     "116613": "Two-Tone",  "126613": "Two-Tone",
     # GMT-Master II
     "116718": "Yellow Gold", "116719": "White Gold", "126719": "White Gold",
+    "116713": "Two-Tone",
+    "126711": "Two-Tone",   # Rootbeer (Oystersteel + Everose)
+    "126713": "Two-Tone",   # Guinness (Oystersteel + Yellow Gold)
+    "126715": "Rose/Everose Gold",
+    "126718": "Yellow Gold",
     # Datejust
     "116238": "Yellow Gold", "126238": "Yellow Gold",
     "116300": "White Gold",
