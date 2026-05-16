@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rolex Grey Market Tracker — Singapore</title>
+  <style>
+    :root {
+      --green:  #046c4e;
+      --green-l:#def7ec;
+      --gold:   #b45309;
+      --gold-l: #fffbeb;
+      --red:    #c81e1e;
+      --red-l:  #fde8e8;
+      --gray:   #6b7280;
+      --border: #e5e7eb;
+      --text:   #111827;
+      --bg:     #f3f4f6;
+      --card:   #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --th-bg:  #f8f9fa;
+      --row-hover: #fafbff;
+      --input-bg: #ffffff;
+    }
+    [data-theme='dark'] {
+      --green:  #34d399;
+      --green-l:#064e3b;
+      --gold:   #fbbf24;
+      --gold-l: #451a03;
+      --red:    #f87171;
+      --red-l:  #450a0a;
+      --gray:   #9ca3af;
+      --border: #374151;
+      --text:   #f3f4f6;
+      --bg:     #111827;
+      --card:   #1f2937;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+      --th-bg:  #111827;
+      --row-hover: #2d3748;
+      --input-bg: #1f2937;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: #fff; padding: 36px 24px 28px; text-align: center;
+    }
+    .header .badge {
+      display: inline-block; background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25); border-radius: 20px;
+      padding: 3px 14px; font-size: 11px; font-weight: 600;
+      letter-spacing: .6px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    .header .sub { font-size: 14px; opacity: .7; }
+    .header .meta { margin-top: 10px; font-size: 12px; opacity: .55; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border);
+      background: var(--card); overflow-x: auto;
+    }
+    .stat-pill {
+      flex: 1; min-width: 120px; padding: 14px 18px; text-align: center;
+      border-right: 1px solid var(--border); cursor: pointer;
+      transition: background .15s;
+    }
+    .stat-pill:last-child { border-right: none; }
+    .stat-pill:hover, .stat-pill.active { background: #f0f4ff; }
+    [data-theme='dark'] .stat-pill:hover,
+    [data-theme='dark'] .stat-pill.active { background: #1e3a5f; }
+    .stat-pill.active { border-bottom: 2px solid #1a56db; }
+    .stat-pill .val { font-size: 18px; font-weight: 700; }
+    .stat-pill .lbl { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+    /* ── Controls ── */
+    .controls {
+      max-width: 1300px; margin: 20px auto 0; padding: 0 20px;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .controls input[type=text] {
+      flex: 1; min-width: 200px; padding: 9px 14px;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; background: var(--input-bg); color: var(--text);
+    }
+    .controls select {
+      padding: 9px 14px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; background: var(--input-bg);
+      color: var(--text); cursor: pointer;
+    }
+    .controls .count { font-size: 13px; color: var(--gray); margin-left: auto; }
+
+    /* ── Family cards ── */
+    .families {
+      max-width: 1300px; margin: 20px auto; padding: 0 20px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+    }
+    .fam-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow);
+      cursor: pointer; transition: box-shadow .15s, border-color .15s;
+    }
+    .fam-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); border-color: #c7d2fe; }
+    [data-theme='dark'] .fam-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.5); border-color: #3b5bdb; }
+    .fam-card.selected { border-color: #1a56db; box-shadow: 0 0 0 2px #c7d2fe; }
+    [data-theme='dark'] .fam-card.selected { border-color: #3b5bdb; box-shadow: 0 0 0 2px #1e3a5f; }
+    .fam-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .price-range { display: flex; align-items: baseline; gap: 6px; }
+    .price-range .min { font-size: 20px; font-weight: 700; color: var(--green); }
+    .price-range .sep { color: var(--gray); font-size: 13px; }
+    .price-range .max { font-size: 14px; color: var(--gray); }
+    .fam-meta { margin-top: 6px; font-size: 12px; color: var(--gray); }
+    .fam-meta span { margin-right: 10px; }
+    .avg-pill {
+      display: inline-block; background: var(--gold-l);
+      color: var(--gold); font-size: 11px; font-weight: 600;
+      padding: 1px 8px; border-radius: 10px; margin-top: 6px;
+    }
+
+    /* ── Listings table ── */
+    .table-wrap {
+      max-width: 1300px; margin: 0 auto 40px; padding: 0 20px;
+    }
+    .section-title {
+      font-size: 16px; font-weight: 600; margin-bottom: 12px;
+      padding-top: 4px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-title .clear-btn {
+      font-size: 12px; font-weight: 400; color: #1a56db;
+      cursor: pointer; text-decoration: underline;
+    }
+    table { width: 100%; border-collapse: collapse; background: var(--card);
+            border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+            box-shadow: var(--shadow); font-size: 13px; }
+    thead { background: var(--th-bg); }
+    th { padding: 10px 14px; text-align: left; font-weight: 600;
+         font-size: 11px; text-transform: uppercase; letter-spacing: .4px;
+         color: var(--gray); border-bottom: 1px solid var(--border);
+         cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { background: #f0f4ff; }
+    [data-theme='dark'] th:hover { background: #1e3a5f; }
+    th .sort-icon { margin-left: 4px; opacity: .4; }
+    th.sorted .sort-icon { opacity: 1; color: #1a56db; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--row-hover); }
+
+    .title-cell { max-width: 360px; }
+    .title-cell a { color: var(--text); text-decoration: none; font-weight: 500; }
+    .title-cell a:hover { color: #1a56db; text-decoration: underline; }
+    .ref-badge {
+      display: inline-block; background: #e0e7ff; color: #3730a3;
+      font-size: 10px; font-weight: 600; padding: 1px 7px;
+      border-radius: 6px; margin-left: 6px; vertical-align: middle;
+    }
+    .price-cell { font-weight: 700; font-size: 14px; white-space: nowrap; }
+    .cond-badge {
+      display: inline-block; padding: 2px 9px; border-radius: 10px;
+      font-size: 11px; font-weight: 600;
+    }
+    .cond-badge.brand-new   { background: var(--green-l); color: var(--green); }
+    .cond-badge.like-new    { background: #dbeafe; color: #1e40af; }
+    .cond-badge.lightly-used{ background: var(--gold-l); color: var(--gold); }
+    .cond-badge.well-used   { background: #fee2e2; color: #991b1b; }
+    .cond-badge.other       { background: #f3f4f6; color: var(--gray); }
+
+    .family-tag {
+      display: inline-block; background: #f3f4f6; color: var(--gray);
+      font-size: 11px; padding: 1px 8px; border-radius: 6px;
+    }
+
+    /* ── Material badges ── */
+    .mat-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .mat-steel        { background: #f3f4f6; color: #374151; }
+    .mat-two-tone     { background: #fef3c7; color: #92400e; }
+    .mat-rose-gold    { background: #fce7f3; color: #9d174d; }
+    .mat-white-gold   { background: #ede9fe; color: #4c1d95; }
+    .mat-yellow-gold  { background: #fef9c3; color: #713f12; border: 1px solid #fde68a; }
+    .mat-platinum     { background: #e0f2fe; color: #0c4a6e; }
+    .mat-diamond      { background: #f0fdf4; color: #14532d; border: 1px solid #86efac; }
+    .mat-unknown      { background: #f3f4f6; color: var(--gray); }
+    [data-theme='dark'] .mat-steel        { background: #374151; color: #d1d5db; }
+    [data-theme='dark'] .mat-two-tone     { background: #451a03; color: #fcd34d; }
+    [data-theme='dark'] .mat-rose-gold    { background: #500724; color: #f9a8d4; }
+    [data-theme='dark'] .mat-white-gold   { background: #2e1065; color: #c4b5fd; }
+    [data-theme='dark'] .mat-yellow-gold  { background: #422006; color: #fde68a; border-color: #92400e; }
+    [data-theme='dark'] .mat-platinum     { background: #0c4a6e; color: #bae6fd; }
+    [data-theme='dark'] .mat-diamond      { background: #052e16; color: #6ee7b7; border-color: #065f46; }
+    [data-theme='dark'] .mat-unknown      { background: #374151; color: var(--gray); }
+
+    /* ── Material breakdown inside family card ── */
+    .mat-breakdown { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+    .mat-row { display: flex; justify-content: space-between; align-items: center;
+               padding: 3px 0; font-size: 12px; gap: 8px; }
+    .mat-row .mat-badge { flex-shrink: 0; }
+    .mat-row .mat-prices { color: var(--gray); font-size: 11px; text-align: right; }
+    .mat-row .mat-count { color: var(--gray); font-size: 11px; min-width: 28px; text-align: right; }
+
+    /* ── Year breakdown inside family card ── */
+    .yr-breakdown { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+    .yr-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer;
+                 font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+                 color: var(--gray); user-select: none; background: none; border: none;
+                 padding: 0; font-family: inherit; }
+    .yr-toggle:hover { color: var(--text); }
+    .yr-toggle .yr-arrow { font-size: 9px; transition: transform .2s; display: inline-block; }
+    .yr-toggle.open .yr-arrow { transform: rotate(90deg); }
+    .yr-rows { display: none; margin-top: 6px; }
+    .yr-rows.open { display: block; }
+    .yr-row { display: flex; justify-content: space-between; align-items: center;
+              padding: 2px 0; font-size: 12px; gap: 8px; }
+    .yr-row .yr-label { font-weight: 600; font-size: 12px; min-width: 38px; }
+    .yr-row .yr-avg   { color: var(--gray); font-size: 11px; }
+    .yr-row .yr-count { color: var(--gray); font-size: 11px; min-width: 28px; text-align: right; }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .header { padding: 24px 16px 20px; }
+      .header h1 { font-size: 20px; }
+      .theme-btn { top: 12px; right: 12px; padding: 4px 10px; font-size: 11px; }
+      .stats-bar { flex-wrap: nowrap; overflow-x: auto; }
+      .stat-pill { min-width: 100px; padding: 10px 12px; }
+      .stat-pill .val { font-size: 15px; }
+      .families { grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 12px; margin: 12px auto; }
+      .fam-card { padding: 12px 12px; }
+      .fam-card h3 { font-size: 13px; }
+      .price-range .min { font-size: 16px; }
+      .controls { padding: 0 12px; gap: 8px; }
+      .controls input[type=text] { min-width: 0; }
+      .table-wrap { padding: 0 12px; overflow-x: auto; }
+      table { min-width: 560px; }
+      .mat-row .mat-prices { display: none; }
+    }
+
+    .empty { text-align: center; padding: 48px; color: var(--gray); }
+
+    /* ── History chart ── */
+    .chart-wrap {
+      max-width: 1300px; margin: 0 auto 30px; padding: 0 20px;
+    }
+    canvas { max-width: 100%; }
+
+    /* ── Dark mode toggle ── */
+    .theme-btn {
+      position: absolute; top: 16px; right: 20px;
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25);
+      color: #fff; border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; cursor: pointer; transition: background .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .theme-btn:hover { background: rgba(255,255,255,.2); }
+    .header { position: relative; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 24px; font-size: 12px; color: var(--gray);
+             border-top: 1px solid var(--border); background: var(--card); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle dark mode">🌙 Dark</button>
+  <div class="badge">Grey Market • Singapore</div>
+  <h1>⌚ Rolex Price Tracker</h1>
+  <div class="sub">Live listings from Carousell SG · Brand New &amp; Pre-owned</div>
+  <div class="meta" id="metaLine">Loading…</div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="controls">
+  <input type="text" id="searchBox" placeholder="Search model, ref, keyword…" />
+  <select id="matFilter">
+    <option value="">All materials</option>
+    <option value="Stainless Steel">Stainless Steel</option>
+    <option value="Two-Tone">Two-Tone / Rolesor</option>
+    <option value="Rose/Everose Gold">Rose / Everose Gold</option>
+    <option value="White Gold">White Gold</option>
+    <option value="Yellow Gold">Yellow Gold</option>
+    <option value="Platinum">Platinum</option>
+    <option value="Diamond">Diamond</option>
+  </select>
+  <select id="condFilter">
+    <option value="">All conditions</option>
+    <option value="Brand new">Brand New</option>
+    <option value="Like new">Like New</option>
+    <option value="Lightly used">Lightly Used</option>
+    <option value="Well used">Well Used</option>
+  </select>
+  <select id="sortSel">
+    <option value="price-asc">Price: Low → High</option>
+    <option value="price-desc">Price: High → Low</option>
+    <option value="family">By Model</option>
+  </select>
+  <span class="count" id="countLabel"></span>
+</div>
+
+<div class="families" id="familyCards"></div>
+
+<div class="table-wrap">
+  <div class="section-title" id="sectionTitle">
+    All Listings
+  </div>
+  <table id="listingsTable">
+    <thead>
+      <tr>
+        <th data-col="title">Title <span class="sort-icon">↕</span></th>
+        <th data-col="ref">Ref <span class="sort-icon">↕</span></th>
+        <th data-col="family">Model <span class="sort-icon">↕</span></th>
+        <th data-col="material">Material <span class="sort-icon">↕</span></th>
+        <th data-col="price" class="sorted">Price <span class="sort-icon">↑</span></th>
+        <th data-col="condition">Condition <span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="listingsBody"></tbody>
+  </table>
+</div>
+
+<footer id="footerLine">Data from Carousell SG · Personal use only</footer>
+
+<script>
+  // ── Dark mode ─────────────────────────────────────────────────────────
+  (function() {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved === 'dark' || (!saved && prefersDark)) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    const btn = document.getElementById('themeToggle');
+    btn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  }
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    applyTheme(!isDark);
+  });
+
+  // Set correct button label on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('themeToggle').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  });
+
+  let DATA = null;
+  let allListings = [];
+  let activeFamily = null;
+  let sortCol = 'price';
+  let sortDir = 1; // 1 = asc, -1 = desc
+
+  // ── Load data ────────────────────────────────────────────────────────
+  fetch('data.json?v=' + Date.now())
+    .then(r => r.json())
+    .then(d => { DATA = d; init(); })
+    .catch(() => {
+      document.getElementById('metaLine').textContent = 'Failed to load data.json';
+    });
+
+  function init() {
+    // Flatten all listings
+    allListings = [];
+    for (const [fam, data] of Object.entries(DATA.families)) {
+      for (const item of data.listings) {
+        allListings.push({ ...item, family: fam });
+      }
+    }
+
+    // Header meta
+    const updated = new Date(DATA.updated);
+    document.getElementById('metaLine').textContent =
+      `${DATA.total_listings} listings · Updated ${updated.toLocaleDateString('en-SG', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      })} · ${DATA.source}`;
+
+    renderStatsBar();
+    renderFamilyCards();
+    renderTable();
+
+    // Event listeners
+    document.getElementById('searchBox').addEventListener('input', renderTable);
+    document.getElementById('condFilter').addEventListener('change', renderTable);
+    document.getElementById('matFilter').addEventListener('change', renderTable);
+    document.getElementById('sortSel').addEventListener('change', () => {
+      const v = document.getElementById('sortSel').value;
+      if (v === 'price-asc')  { sortCol = 'price'; sortDir = 1; }
+      if (v === 'price-desc') { sortCol = 'price'; sortDir = -1; }
+      if (v === 'family')     { sortCol = 'family'; sortDir = 1; }
+      renderTable();
+    });
+
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) sortDir *= -1;
+        else { sortCol = col; sortDir = 1; }
+        document.querySelectorAll('th').forEach(t => {
+          t.classList.remove('sorted');
+          t.querySelector('.sort-icon').textContent = '↕';
+        });
+        th.classList.add('sorted');
+        th.querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+        renderTable();
+      });
+    });
+  }
+
+  // ── Stats bar ────────────────────────────────────────────────────────
+  function renderStatsBar() {
+    const bar = document.getElementById('statsBar');
+    const families = Object.keys(DATA.families);
+    const totalCount = DATA.total_listings;
+
+    // "All" pill
+    const allPill = mkEl('div', 'stat-pill active', bar);
+    allPill.dataset.fam = '';
+    mkEl('div', 'val', allPill).textContent = totalCount;
+    mkEl('div', 'lbl', allPill).textContent = 'All Models';
+    allPill.addEventListener('click', () => selectFamily(null));
+
+    for (const fam of families) {
+      const s = DATA.families[fam].stats;
+      const pill = mkEl('div', 'stat-pill', bar);
+      pill.dataset.fam = fam;
+      mkEl('div', 'val', pill).textContent = s.count;
+      mkEl('div', 'lbl', pill).textContent = fam;
+      pill.addEventListener('click', () => selectFamily(fam));
+    }
+  }
+
+  // ── Material badge CSS class ─────────────────────────────────────────
+  function matBadgeCls(mat) {
+    const m = (mat || '').toLowerCase();
+    if (m.includes('steel'))   return 'mat-steel';
+    if (m.includes('two'))     return 'mat-two-tone';
+    if (m.includes('rose') || m.includes('everose')) return 'mat-rose-gold';
+    if (m.includes('white'))   return 'mat-white-gold';
+    if (m.includes('yellow'))  return 'mat-yellow-gold';
+    if (m.includes('platinum'))return 'mat-platinum';
+    if (m.includes('diamond')) return 'mat-diamond';
+    return 'mat-unknown';
+  }
+
+  // ── Family cards ─────────────────────────────────────────────────────
+  function renderFamilyCards() {
+    const wrap = document.getElementById('familyCards');
+    wrap.innerHTML = '';
+    for (const [fam, data] of Object.entries(DATA.families)) {
+      const s = data.stats;
+      const card = mkEl('div', 'fam-card', wrap);
+      card.dataset.fam = fam;
+      mkEl('h3', '', card).textContent = fam;
+      const pr = mkEl('div', 'price-range', card);
+      mkEl('span', 'min', pr).textContent = 'S$' + s.min.toLocaleString();
+      mkEl('span', 'sep', pr).textContent = '–';
+      mkEl('span', 'max', pr).textContent = 'S$' + s.max.toLocaleString();
+      const meta = mkEl('div', 'fam-meta', card);
+      mkEl('span', '', meta).textContent = `${s.count} listings`;
+      mkEl('span', '', meta).textContent = `Median S$${s.median.toLocaleString()}`;
+
+      // Material breakdown
+      if (data.by_material && Object.keys(data.by_material).length > 1) {
+        const bd = mkEl('div', 'mat-breakdown', card);
+        for (const [mat, mdata] of Object.entries(data.by_material)) {
+          const ms = mdata.stats;
+          const row = mkEl('div', 'mat-row', bd);
+          const badge = mkEl('span', `mat-badge ${matBadgeCls(mat)}`, row);
+          badge.textContent = mat;
+          mkEl('span', 'mat-prices', row).textContent =
+            `S$${ms.min.toLocaleString()} – S$${ms.max.toLocaleString()}  (avg S$${ms.avg.toLocaleString()})`;
+          mkEl('span', 'mat-count', row).textContent = `×${ms.count}`;
+        }
+      }
+
+      // Year breakdown (collapsible)
+      if (data.by_year) {
+        const knownYears = Object.entries(data.by_year).filter(([yr]) => yr !== 'Unknown');
+        if (knownYears.length > 1) {
+          const yd = mkEl('div', 'yr-breakdown', card);
+          const toggle = mkEl('button', 'yr-toggle', yd);
+          const arrow = mkEl('span', 'yr-arrow', toggle);
+          arrow.textContent = '▶';
+          const lbl = document.createTextNode(' Avg by year');
+          toggle.appendChild(lbl);
+          const rows = mkEl('div', 'yr-rows', yd);
+          for (const [yr, ydata] of knownYears) {
+            const ys = ydata.stats;
+            const row = mkEl('div', 'yr-row', rows);
+            mkEl('span', 'yr-label', row).textContent = yr;
+            mkEl('span', 'yr-avg', row).textContent = `avg S$${ys.avg.toLocaleString()}`;
+            mkEl('span', 'yr-count', row).textContent = `×${ys.count}`;
+          }
+          toggle.addEventListener('click', e => {
+            e.stopPropagation();
+            const open = rows.classList.toggle('open');
+            toggle.classList.toggle('open', open);
+          });
+        }
+      }
+
+      card.addEventListener('click', () => selectFamily(fam));
+    }
+  }
+
+  // ── Select family ─────────────────────────────────────────────────────
+  function selectFamily(fam) {
+    activeFamily = fam;
+    // Update pills
+    document.querySelectorAll('.stat-pill').forEach(p => {
+      p.classList.toggle('active', (p.dataset.fam || null) === fam);
+    });
+    // Update cards
+    document.querySelectorAll('.fam-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.fam === fam);
+    });
+    // Update section title
+    const title = document.getElementById('sectionTitle');
+    title.innerHTML = fam
+      ? `${fam} Listings <span class="clear-btn" id="clearFam">Show All</span>`
+      : 'All Listings';
+    if (fam) {
+      document.getElementById('clearFam').addEventListener('click', () => selectFamily(null));
+    }
+    renderTable();
+  }
+
+  // ── Render table ─────────────────────────────────────────────────────
+  function renderTable() {
+    const query = document.getElementById('searchBox').value.toLowerCase();
+    const cond  = document.getElementById('condFilter').value;
+    const mat   = document.getElementById('matFilter').value;
+
+    let items = allListings.filter(item => {
+      if (activeFamily && item.family !== activeFamily) return false;
+      if (cond && item.condition !== cond) return false;
+      if (mat && item.material !== mat) return false;
+      if (query) {
+        const hay = `${item.title} ${item.ref || ''} ${item.family} ${item.material || ''}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+
+    // Sort
+    items.sort((a, b) => {
+      let va = a[sortCol] || '', vb = b[sortCol] || '';
+      if (typeof va === 'number') return (va - vb) * sortDir;
+      return String(va).localeCompare(String(vb)) * sortDir;
+    });
+
+    document.getElementById('countLabel').textContent =
+      `${items.length} listing${items.length !== 1 ? 's' : ''}`;
+
+    const tbody = document.getElementById('listingsBody');
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No listings match your filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    for (const item of items) {
+      const tr = tbody.insertRow();
+      // Title
+      const tdTitle = tr.insertCell();
+      tdTitle.className = 'title-cell';
+      const a = document.createElement('a');
+      a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = item.title;
+      tdTitle.appendChild(a);
+      if (item.ref) {
+        const badge = document.createElement('span');
+        badge.className = 'ref-badge';
+        badge.textContent = item.ref;
+        tdTitle.appendChild(badge);
+      }
+      // Ref
+      tr.insertCell().textContent = item.ref || '—';
+      // Family
+      const tdFam = tr.insertCell();
+      const famTag = document.createElement('span');
+      famTag.className = 'family-tag';
+      famTag.textContent = item.family;
+      tdFam.appendChild(famTag);
+      // Material
+      const tdMat = tr.insertCell();
+      const matBadge = document.createElement('span');
+      matBadge.className = `mat-badge ${matBadgeCls(item.material)}`;
+      matBadge.textContent = item.material || '—';
+      tdMat.appendChild(matBadge);
+      // Price
+      const tdPrice = tr.insertCell();
+      tdPrice.className = 'price-cell';
+      tdPrice.textContent = 'S$' + item.price.toLocaleString();
+      // Condition
+      const tdCond = tr.insertCell();
+      const badge = document.createElement('span');
+      const cls = item.condition.toLowerCase().replace(/\s+/g, '-');
+      badge.className = `cond-badge ${cls}`;
+      badge.textContent = item.condition;
+      tdCond.appendChild(badge);
+    }
+  }
+
+  // ── Util ─────────────────────────────────────────────────────────────
+  function mkEl(tag, cls, parent) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (parent) parent.appendChild(el);
+    return el;
+  }
+</script>
+</body>
+</html>
